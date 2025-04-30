@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Customer Segmentation Engine | Avishai Zarfati</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased">
+  <header class="bg-white shadow py-4 px-4">
+    <div class="container mx-auto flex items-center justify-between">
+      <a href="index.html" class="text-xl font-bold tracking-tight">← Back to Portfolio</a>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-12 space-y-8">
+    <h1 class="text-4xl font-bold mb-4">Customer Segmentation Engine</h1>
+    <p class="text-lg leading-relaxed mb-6">
+      A scalable clustering pipeline built in Google BigQuery ML that segmented 1 million+ shoppers into actionable cohorts,
+      enabling personalised marketing campaigns and boosting ROAS by 25 %.
+    </p>
+
+    <h2 class="text-2xl font-semibold mb-2">Key Responsibilities</h2>
+    <ul class="list-disc pl-6 space-y-1">
+      <li>Cleaned and denormalised 18 months of transaction & site‑behaviour data (900 GB) with SQL.</li>
+      <li>Engineered RFM‑style and behavioural features; reduced dimensionality via PCA.</li>
+      <li>Trained & evaluated <code>kmeans</code> models in BigQuery ML, selecting k = 7 via silhouette score.</li>
+      <li>Deployed scheduled clustering to BigQuery using Cloud Composer; dashboards auto‑refresh in Looker Studio.</li>
+    </ul>
+
+    <h2 class="text-2xl font-semibold mt-8 mb-2">Impact</h2>
+    <ul class="list-disc pl-6 space-y-1">
+      <li>Campaign ROAS ↑ 25 % within 2 months by targeting high‑value clusters.</li>
+      <li>Churn cluster predictive model fed retention emails, reducing churn by 8 % QoQ.</li>
+    </ul>
+  </main>
+
+  <footer class="text-center text-sm py-10 text-gray-500">
+    © 2025 Avishai Zarfati. Built with Tailwind CSS.
+  </footer>
+</body>
+</html>
