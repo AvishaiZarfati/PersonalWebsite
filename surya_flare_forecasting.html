@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Surya Fine-Tuning — Solar Flare Forecasting</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Fine-tuning NASA’s Surya foundation model to forecast M/X-class solar flares with an end-to-end GPU pipeline for data, training, inference, and evaluation." />
+  <link rel="canonical" href="https://avishai-portfolio.netlify.app/surya_flare_forecasting" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:title" content="Surya Fine-Tuning — Solar Flare Forecasting" />
+  <meta property="og:description" content="LoRA-tuned Surya, full GPU pipeline, and benchmark-ready evaluation for 24-hour flare risk." />
+  <meta property="og:image" content="https://avishai-portfolio.netlify.app/assets/surya/og-sun.jpg" />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <style>
+    :root{--ink:#111;--muted:#555;--line:#eaeaea;--bg:#fff;--chip:#0e1116;--chipfg:#fff}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+    .container{max-width:980px;margin:0 auto;padding:28px 20px 60px}
+    .hero{position:relative;border-bottom:1px solid var(--line);overflow:hidden}
+    .hero-inner{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center;padding:28px 0}
+    @media (max-width:900px){.hero-inner{grid-template-columns:1fr}}
+    h1{font-size:clamp(28px,3.4vw,40px);line-height:1.1;margin:0 0 10px}
+    p.lead{color:var(--muted);font-size:clamp(16px,1.6vw,18px);line-height:1.6;margin:0}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    .chip{background:var(--chip);color:var(--chipfg);padding:6px 10px;border-radius:999px;font-size:12px}
+    .panel{border:1px solid var(--line);border-radius:16px;padding:22px;background:#fff}
+    .grid{display:grid;gap:18px}
+    .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+    .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+    @media (max-width:900px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr}}
+    h2{font-size:22px;margin:0 0 14px}
+    h3{font-size:18px;margin:0 0 8px}
+    .muted{color:var(--muted)}
+    .meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+    .meta span{font-size:13px;color:#666}
+    figure{margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fafafa}
+    figure img{display:block;width:100%;height:auto}
+    figcaption{padding:10px 12px;font-size:13px;color:#666}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:13px;background:#0e1116;color:#d1d5db;border-radius:12px;padding:14px;overflow:auto}
+    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media (max-width:900px){.gallery{grid-template-columns:1fr 1fr}}
+    @media (max-width:600px){.gallery{grid-template-columns:1fr}}
+    .btn{display:inline-block;padding:10px 14px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-weight:600}
+    .btn-primary{background:#111;color:#fff;border-color:#111}
+    .spacer{height:28px}
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div>
+        <h1>Surya Fine-Tuning for Solar Flare Forecasting</h1>
+        <p class="lead">
+          I fine-tuned NASA’s <strong>Surya</strong> foundation model to forecast the probability of 
+          <strong>M/X-class solar flares</strong> in the next 24 hours. The project includes a 
+          reproducible GPU pipeline for data preparation, training, inference, and evaluation.
+        </p>
+        <div class="chips">
+          <span class="chip">Python 3.11</span>
+          <span class="chip">PyTorch (CUDA)</span>
+          <span class="chip">LoRA / PEFT</span>
+          <span class="chip">Hugging Face</span>
+          <span class="chip">A100 GPU</span>
+        </div>
+        <div class="meta">
+          <span>Dataset: SDO (AIA/HMI) + curated flare labels</span>
+          <span>Task: 24-hour M/X-class risk</span>
+        </div>
+        <div class="spacer"></div>
+        <a class="btn btn-primary" href="#results">Jump to Results</a>
+        <a class="btn" href="#pipeline">See Pipeline</a>
+      </div>
+
+      <!-- Inline SVG “cool picture” — flare art -->
+      <figure aria-hidden="true">
+        <svg viewBox="0 0 900 600" width="100%" height="100%" role="img">
+          <defs>
+            <radialGradient id="g1" cx="30%" cy="35%" r="60%">
+              <stop offset="0%" stop-color="#ffcc66"/>
+              <stop offset="45%" stop-color="#ff9933"/>
+              <stop offset="100%" stop-color="#a63e00"/>
+            </radialGradient>
+            <filter id="glow"><feGaussianBlur stdDeviation="8"/></filter>
+          </defs>
+          <rect width="100%" height="100%" fill="#0b0f18"/>
+          <circle cx="280" cy="260" r="150" fill="url(#g1)" filter="url(#glow)"/>
+          <g stroke="#ffa54d" stroke-width="2" fill="none" opacity="0.9">
+            <path d="M280,110 C440,130 520,220 540,310" />
+            <path d="M240,120 C400,160 520,250 560,360" />
+            <path d="M220,150 C360,190 500,310 600,420" />
+          </g>
+          <g stroke="#76e4f7" stroke-opacity="0.8" fill="none">
+            <path d="M630,120 Q700,180 760,140" />
+            <path d="M600,160 Q730,220 820,210" />
+          </g>
+          <text x="24" y="576" fill="#9fb3c8" font-family="Inter,system-ui" font-size="14">Solar flare visualization (stylized)</text>
+        </svg>
+        <figcaption>Stylized solar-flare artwork rendered inline as SVG.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <main class="container">
+
+    <!-- OVERVIEW -->
+    <section class="panel" id="overview">
+      <h2>Overview</h2>
+      <p class="muted">
+        Solar flares can disrupt satellites, power grids, and communications. I adapted Surya’s pretrained
+        heliophysics representations to a supervised downstream task: predicting M/X-class flare risk within 24 hours.
+        The system runs on GPU (A100) with persistent storage for datasets, checkpoints, and caches.
+      </p>
+      <div class="grid cols-3">
+        <div>
+          <h3>Objective</h3>
+          <p class="muted">Forecast 24-hour flare risk using SDO imagery (AIA/HMI) + curated flare labels/splits.</p>
+        </div>
+        <div>
+          <h3>Approach</h3>
+          <p class="muted">LoRA/PEFT adapters on top of the Surya backbone → efficient training of ~1M params.</p>
+        </div>
+        <div>
+          <h3>Deliverables</h3>
+          <p class="muted">Reproducible pipeline, trained checkpoints, evaluation scripts, and visual artifacts.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="spacer"></div>
+
+    <!-- PIPELINE -->
+    <section class="panel" id="pipeline">
+      <h2>Pipeline</h2>
+      <div class="grid cols-2">
+        <div>
+          <ol class="muted" style="line-height:1.8">
+            <li><strong>Environment & Infra:</strong> Python 3.11, CUDA PyTorch, A100 GPU, persistent NFS.</li>
+            <li><strong>Data:</strong> Download & organize SDO imagery and labeled splits; preprocess into loaders.</li>
+            <li><strong>Fine-Tuning:</strong> Freeze backbone; train LoRA adapters on flare classification head.</li>
+            <li><strong>Evaluation:</strong> Accuracy/F1/ROC-AUC; future iterations include TSS and class-imbalance handling.</li>
+            <li><strong>Artifacts:</strong> Checkpoints, prediction CSVs, validation plots, confusion matrices.</li>
+          </ol>
+          <div class="code" aria-label="Command snippet">
+# launch single-GPU training
+torchrun --nnodes=1 --nproc_per_node=1 --standalone \
+  finetune.py --gpu
+
+# evaluate a checkpoint (example script)
+python eval_from_ckpt.py --ckpt runs/epoch_19.pth --split val --out runs/eval_epoch19
+          </div>
+        </div>
+        <!-- Inline “flow” diagram (SVG) -->
+        <figure>
+          <svg viewBox="0 0 760 420" width="100%" height="100%" role="img" aria-label="Training pipeline diagram">
+            <rect width="100%" height="100%" fill="#fafafa"/>
+            <g font-family="Inter,system-ui" font-size="14">
+              <rect x="24" y="40" width="200" height="68" rx="12" fill="#111" />
+              <text x="44" y="80" fill="#fff">SDO AIA/HMI + labels</text>
+
+              <rect x="264" y="40" width="200" height="68" rx="12" fill="#111" />
+              <text x="294" y="64" fill="#fff">Data loaders</text>
+              <text x="294" y="86" fill="#9fb3c8">train / val / test</text>
+
+              <rect x="504" y="40" width="232" height="68" rx="12" fill="#111" />
+              <text x="524" y="64" fill="#fff">Surya backbone + LoRA head</text>
+
+              <rect x="264" y="172" width="200" height="68" rx="12" fill="#111" />
+              <text x="294" y="212" fill="#fff">Training (GPU)</text>
+
+              <rect x="504" y="172" width="232" height="68" rx="12" fill="#111" />
+              <text x="524" y="196" fill="#fff">Checkpoints</text>
+              <text x="524" y="218" fill="#9fb3c8">epoch_X.pth</text>
+
+              <rect x="24" y="304" width="200" height="68" rx="12" fill="#111" />
+              <text x="44" y="344" fill="#fff">Evaluation</text>
+
+              <rect x="264" y="304" width="200" height="68" rx="12" fill="#111" />
+              <text x="284" y="328" fill="#fff">Metrics & plots</text>
+              <text x="284" y="350" fill="#9fb3c8">AUC, F1, confusion</text>
+
+              <rect x="504" y="304" width="232" height="68" rx="12" fill="#111" />
+              <text x="524" y="344" fill="#fff">Predictions CSV</text>
+
+              <!-- arrows -->
+              <g stroke="#777" stroke-width="2" fill="none">
+                <path d="M224,74 H264" />
+                <path d="M464,74 H504" />
+                <path d="M364,108 V172" />
+                <path d="M464,206 H504" />
+                <path d="M600,108 V172" />
+                <path d="M296,240 V304" />
+                <path d="M464,338 H504" />
+                <path d="M224,338 H264" />
+              </g>
+            </g>
+          </svg>
+          <figcaption>End-to-end training & evaluation flow.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <div class="spacer"></div>
+
+    <!-- RESULTS -->
+    <section class="panel" id="results">
+      <h2>Results & Artifacts</h2>
+      <div class="grid cols-3">
+        <div class="panel">
+          <h3>Sanity Run ✓</h3>
+          <p class="muted">Verified model weights + tiny validation set; pipeline runs clean on GPU.</p>
+        </div>
+        <div class="panel">
+          <h3>Checkpoints</h3>
+          <p class="muted">Multiple epochs saved (e.g., <code>epoch_19.pth</code>) for downstream evaluation.</p>
+        </div>
+        <div class="panel">
+          <h3>Metrics</h3>
+          <p class="muted">Accuracy, precision, recall, F1, ROC-AUC. Next iterations: TSS & class-imbalance calibration.</p>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="gallery">
+        <figure>
+          <img src="/assets/surya/surya_model_validation.png" alt="Validation visualization generated by Surya sanity test">
+          <figcaption>Validation visualization from the Surya sanity test.</figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/surya/confusion_matrix.png" alt="Confusion matrix on validation split">
+          <figcaption>Confusion matrix (validation split).</figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/surya/pipeline-screenshot.jpg" alt="Training logs and GPU usage">
+          <figcaption>Training logs & GPU utilization snapshot.</figcaption>
+        </figure>
+      </div>
+
+      <div class="spacer"></div>
+
+      <a class="btn" href="#gallery">More pictures ↓</a>
+    </section>
+
+    <div class="spacer"></div>
+
+    <!-- HIGHLIGHTS -->
+    <section class="panel">
+      <h2>Highlights</h2>
+      <ul class="muted" style="line-height:1.9;margin:0;padding-left:18px">
+        <li>Set up CUDA PyTorch on A100; persisted HF cache, datasets, and runs on NFS.</li>
+        <li>Automated data download & extraction; robust to large tar splits and low-disk issues.</li>
+        <li>LoRA/PEFT strategy to train ~1M params while freezing ~360M-param backbone.</li>
+        <li>Custom evaluation script to load checkpoints and emit metrics & predictions.</li>
+        <li>Clean separation of config, data loaders, and evaluation for reproducibility.</li>
+      </ul>
+    </section>
+
+    <div class="spacer"></div>
+
+    <!-- GALLERY (extra) -->
+    <section class="panel" id="gallery">
+      <h2>Gallery</h2>
+      <div class="gallery">
+        <figure>
+          <img src="/assets/surya/flare-closeup.jpg" alt="Close-up of solar flare from SDO imagery">
+          <figcaption>SDO flare close-up (illustrative).</figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/surya/epochs-loss.png" alt="Training loss vs epoch chart">
+          <figcaption>Loss vs. epoch during fine-tuning.</figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/surya/roc-curve.png" alt="ROC curve on validation split">
+          <figcaption>ROC curve for the validation split.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <div class="spacer"></div>
+
+    <!-- CTA -->
+    <section cla
